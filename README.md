@@ -119,7 +119,6 @@ npm run dev
 1. **Open the application** in your browser (typically `http://localhost:5173`)
 2. **Click the menu button** (top-right) to open the identifier panel
 3. **Enter any chemical identifier**:
-   - IUPAC Name: `caffeine`, `aspirin`, `glucose`
    - CAS Number: `58-08-2` (caffeine)
    - PubChem CID: `2519` (caffeine)
    - SMILES: `CN1C=NC2=C1C(=O)N(C(=O)N2C)C`
