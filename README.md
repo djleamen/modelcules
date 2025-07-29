@@ -9,7 +9,7 @@ Modelcules is a sophisticated web application for visualizing 3D molecular struc
 ## ✨ Features
 
 ### 🔍 **Multi-Database Chemical Lookup**
-- **Comprehensive Identifier Support**: IUPAC names, CAS numbers, PubChem CIDs, SMILES, InChI, UNII codes, and more
+- **Comprehensive Identifier Support**: IUPAC, CAS numbers, PubChem CIDs, SMILES, InChI, UNII codes, and more
 - **Multi-Database Integration**: PubChem API and NCI/CACTUS with intelligent failover
 - **Local Database**: Fast lookup for 50+ common compounds (caffeine, aspirin, glucose, etc.)
 - **Smart Caching**: 1-hour TTL with automatic cleanup to minimize API calls
