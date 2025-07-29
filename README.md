@@ -4,7 +4,7 @@
 
 Modelcules is a sophisticated web application for visualizing 3D molecular structures from chemical identifiers. Built with React, Three.js, and TypeScript, it offers real-time 3D rendering of molecules with an intelligent multi-database chemical lookup system.
 
-![Modelcules Screenshot](https://via.placeholder.com/800x400?text=Modelcules+3D+Molecular+Visualization)
+<img width="1512" height="859" alt="Screenshot 2025-07-29 at 1 06 44 AM" src="https://github.com/user-attachments/assets/78a78d73-d576-4461-976d-9910ea615a6a" />
 
 ## ✨ Features
 
