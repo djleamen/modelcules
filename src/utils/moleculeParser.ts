@@ -57,7 +57,7 @@ export async function parseMolecule(
 }
 
 // IUPAC Name parser - converts common IUPAC names to 3D structures
-async function parseIUPACName(iupacName: string, allIdentifiers?: Partial<ChemicalIdentifiers>): Promise<Molecule3D> {
+async function parseIUPACName(iupacName: string, _allIdentifiers?: Partial<ChemicalIdentifiers>): Promise<Molecule3D> {
   const lowerName = iupacName.toLowerCase().trim();
   
   const nameToMolecule: { [key: string]: () => Molecule3D } = {
@@ -189,7 +189,7 @@ async function getSmikesFromIUPAC(iupacName: string): Promise<string | null> {
 }
 
 // CAS Number parser - maps known CAS numbers to structures
-function parseCASNumber(casNumber: string, allIdentifiers?: Partial<ChemicalIdentifiers>): Molecule3D {
+function parseCASNumber(casNumber: string, _allIdentifiers?: Partial<ChemicalIdentifiers>): Molecule3D {
   const cleanCAS = casNumber.replace(/\s/g, '');
   
   const casToMolecule: { [key: string]: () => Molecule3D } = {
@@ -299,7 +299,7 @@ function parseInChI(inchi: string): Molecule3D {
 }
 
 // ChemSpider ID parser
-function parseChemSpiderID(chemSpiderID: string, allIdentifiers?: Partial<ChemicalIdentifiers>): Molecule3D {
+function parseChemSpiderID(chemSpiderID: string, _allIdentifiers?: Partial<ChemicalIdentifiers>): Molecule3D {
   const cleanID = chemSpiderID.trim();
   
   const chemSpiderToMolecule: { [key: string]: () => Molecule3D } = {
@@ -326,7 +326,7 @@ function parseChemSpiderID(chemSpiderID: string, allIdentifiers?: Partial<Chemic
 }
 
 // UNII parser
-function parseUNII(unii: string, allIdentifiers?: Partial<ChemicalIdentifiers>): Molecule3D {
+function parseUNII(unii: string, _allIdentifiers?: Partial<ChemicalIdentifiers>): Molecule3D {
   const cleanUNII = unii.trim().toUpperCase();
   
   const uniiToMolecule: { [key: string]: () => Molecule3D } = {
@@ -353,7 +353,7 @@ function parseUNII(unii: string, allIdentifiers?: Partial<ChemicalIdentifiers>):
 }
 
 // Parser for other identifier types
-function parseOtherIdentifiers(type: keyof ChemicalIdentifiers, value: string, allIdentifiers?: Partial<ChemicalIdentifiers>): Molecule3D {
+function parseOtherIdentifiers(type: keyof ChemicalIdentifiers, value: string, _allIdentifiers?: Partial<ChemicalIdentifiers>): Molecule3D {
   // For demonstration, we'll map some common values for each identifier type
   
   if (type === 'ecNumber') {
