@@ -1338,7 +1338,7 @@ function createNitrogen(): Molecule3D {
   return {
     atoms: [
       { id: 0, element: 'N', x: 0, y: 0, z: 0 },
-      { id: 1, element: 'N', x: 1.10, y: 0, z: 0 },
+      { id: 1, element: 'N', x: 1.1, y: 0, z: 0 },
     ],
     bonds: [
       { atomIndex1: 0, atomIndex2: 1, bondType: 3 },
