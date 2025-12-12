@@ -210,7 +210,7 @@ async function getSmikesFromIUPAC(iupacName: string): Promise<string | null> {
 
 // CAS Number parser - maps known CAS numbers to structures
 function parseCASNumber(casNumber: string, _allIdentifiers?: Partial<ChemicalIdentifiers>): Molecule3D {
-  const cleanCAS = casNumber.replace(/\s/g, '');
+  const cleanCAS = casNumber.replaceAll(' ', '');
   
   const casToMolecule: { [key: string]: () => Molecule3D } = {
     // Common molecules with their CAS numbers
@@ -1044,9 +1044,9 @@ function createXylene(): Molecule3D {
       { id: 13, element: 'H', x: -0.5, y: 3.2, z: 0.5 },
       { id: 14, element: 'H', x: 0, y: 3.2, z: -1 },
       // Hydrogens on second methyl group
-      { id: 15, element: 'H', x: 3.0, y: 1.7, z: 0.5 },
-      { id: 16, element: 'H', x: 3.0, y: 0.7, z: 0.5 },
-      { id: 17, element: 'H', x: 3.0, y: 1.2, z: -1 },
+      { id: 15, element: 'H', x: 3, y: 1.7, z: 0.5 },
+      { id: 16, element: 'H', x: 3, y: 0.7, z: 0.5 },
+      { id: 17, element: 'H', x: 3, y: 1.2, z: -1 },
     ],
     bonds: [
       // Benzene ring bonds
@@ -1136,61 +1136,53 @@ function createRibose(): Molecule3D {
   const bonds: Array<{ atomIndex1: number; atomIndex2: number; bondType: number }> = [];
   
   // Simplified ribose ring (furanose form)
-  // Ring carbons
-  atoms.push({ id: 0, element: 'C', x: 0, y: 0, z: 0 });     // C1
-  atoms.push({ id: 1, element: 'C', x: 1.4, y: 0.8, z: 0 }); // C2
-  atoms.push({ id: 2, element: 'C', x: 2.2, y: -0.5, z: 0 }); // C3
-  atoms.push({ id: 3, element: 'C', x: 1.2, y: -1.5, z: 0 }); // C4
-  atoms.push({ id: 4, element: 'O', x: 0.2, y: -1.2, z: 0.8 }); // Ring oxygen
+  // Add all atoms at once
+  atoms.push(
+    { id: 0, element: 'C', x: 0, y: 0, z: 0 },     // C1
+    { id: 1, element: 'C', x: 1.4, y: 0.8, z: 0 }, // C2
+    { id: 2, element: 'C', x: 2.2, y: -0.5, z: 0 }, // C3
+    { id: 3, element: 'C', x: 1.2, y: -1.5, z: 0 }, // C4
+    { id: 4, element: 'O', x: 0.2, y: -1.2, z: 0.8 }, // Ring oxygen
+    { id: 5, element: 'O', x: -0.8, y: 0.8, z: 0 },   // OH on C1
+    { id: 6, element: 'H', x: -1.5, y: 0.5, z: 0 },   // H on OH
+    { id: 7, element: 'O', x: 1.8, y: 1.8, z: 0 },    // OH on C2
+    { id: 8, element: 'H', x: 2.5, y: 2.2, z: 0 },    // H on OH
+    { id: 9, element: 'O', x: 3.2, y: -0.2, z: 0 },   // OH on C3
+    { id: 10, element: 'H', x: 3.8, y: -0.8, z: 0 },  // H on OH
+    { id: 11, element: 'C', x: 1.5, y: -2.8, z: 0 },  // CH2
+    { id: 12, element: 'O', x: 2.5, y: -3.5, z: 0 },  // OH
+    { id: 13, element: 'H', x: 3.2, y: -3.2, z: 0 },  // H on OH
+    { id: 14, element: 'H', x: 0.2, y: 0.2, z: 1 }, // H on C1
+    { id: 15, element: 'H', x: 1, y: 1, z: -1 }, // H on C2
+    { id: 16, element: 'H', x: 2.5, y: -0.8, z: -1 }, // H on C3
+    { id: 17, element: 'H', x: 0.8, y: -1.8, z: -1 }, // H on C4
+    { id: 18, element: 'H', x: 0.8, y: -3.2, z: 0 },   // H on CH2
+    { id: 19, element: 'H', x: 1.8, y: -3.2, z: -0.8 } // H on CH2
+  );
   
-  // Hydroxyl groups
-  atoms.push({ id: 5, element: 'O', x: -0.8, y: 0.8, z: 0 });   // OH on C1
-  atoms.push({ id: 6, element: 'H', x: -1.5, y: 0.5, z: 0 });   // H on OH
-  atoms.push({ id: 7, element: 'O', x: 1.8, y: 1.8, z: 0 });    // OH on C2
-  atoms.push({ id: 8, element: 'H', x: 2.5, y: 2.2, z: 0 });    // H on OH
-  atoms.push({ id: 9, element: 'O', x: 3.2, y: -0.2, z: 0 });   // OH on C3
-  atoms.push({ id: 10, element: 'H', x: 3.8, y: -0.8, z: 0 });  // H on OH
-  
-  // CH2OH group on C4
-  atoms.push({ id: 11, element: 'C', x: 1.5, y: -2.8, z: 0 });  // CH2
-  atoms.push({ id: 12, element: 'O', x: 2.5, y: -3.5, z: 0 });  // OH
-  atoms.push({ id: 13, element: 'H', x: 3.2, y: -3.2, z: 0 });  // H on OH
-  
-  // Hydrogens on ring carbons
-  atoms.push({ id: 14, element: 'H', x: 0.2, y: 0.2, z: 1.0 }); // H on C1
-  atoms.push({ id: 15, element: 'H', x: 1.0, y: 1.0, z: -1.0 }); // H on C2
-  atoms.push({ id: 16, element: 'H', x: 2.5, y: -0.8, z: -1.0 }); // H on C3
-  atoms.push({ id: 17, element: 'H', x: 0.8, y: -1.8, z: -1.0 }); // H on C4
-  atoms.push({ id: 18, element: 'H', x: 0.8, y: -3.2, z: 0 });   // H on CH2
-  atoms.push({ id: 19, element: 'H', x: 1.8, y: -3.2, z: -0.8 }); // H on CH2
-  
-  // Ring bonds
-  bonds.push({ atomIndex1: 0, atomIndex2: 1, bondType: 1 }); // C1-C2
-  bonds.push({ atomIndex1: 1, atomIndex2: 2, bondType: 1 }); // C2-C3
-  bonds.push({ atomIndex1: 2, atomIndex2: 3, bondType: 1 }); // C3-C4
-  bonds.push({ atomIndex1: 3, atomIndex2: 4, bondType: 1 }); // C4-O
-  bonds.push({ atomIndex1: 4, atomIndex2: 0, bondType: 1 }); // O-C1
-  
-  // Hydroxyl bonds
-  bonds.push({ atomIndex1: 0, atomIndex2: 5, bondType: 1 }); // C1-OH
-  bonds.push({ atomIndex1: 5, atomIndex2: 6, bondType: 1 }); // OH-H
-  bonds.push({ atomIndex1: 1, atomIndex2: 7, bondType: 1 }); // C2-OH
-  bonds.push({ atomIndex1: 7, atomIndex2: 8, bondType: 1 }); // OH-H
-  bonds.push({ atomIndex1: 2, atomIndex2: 9, bondType: 1 }); // C3-OH
-  bonds.push({ atomIndex1: 9, atomIndex2: 10, bondType: 1 }); // OH-H
-  
-  // CH2OH group bonds
-  bonds.push({ atomIndex1: 3, atomIndex2: 11, bondType: 1 }); // C4-CH2
-  bonds.push({ atomIndex1: 11, atomIndex2: 12, bondType: 1 }); // CH2-OH
-  bonds.push({ atomIndex1: 12, atomIndex2: 13, bondType: 1 }); // OH-H
-  
-  // Hydrogen bonds
-  bonds.push({ atomIndex1: 0, atomIndex2: 14, bondType: 1 }); // C1-H
-  bonds.push({ atomIndex1: 1, atomIndex2: 15, bondType: 1 }); // C2-H
-  bonds.push({ atomIndex1: 2, atomIndex2: 16, bondType: 1 }); // C3-H
-  bonds.push({ atomIndex1: 3, atomIndex2: 17, bondType: 1 }); // C4-H
-  bonds.push({ atomIndex1: 11, atomIndex2: 18, bondType: 1 }); // CH2-H
-  bonds.push({ atomIndex1: 11, atomIndex2: 19, bondType: 1 }); // CH2-H
+  // Add all bonds at once
+  bonds.push(
+    { atomIndex1: 0, atomIndex2: 1, bondType: 1 }, // C1-C2
+    { atomIndex1: 1, atomIndex2: 2, bondType: 1 }, // C2-C3
+    { atomIndex1: 2, atomIndex2: 3, bondType: 1 }, // C3-C4
+    { atomIndex1: 3, atomIndex2: 4, bondType: 1 }, // C4-O
+    { atomIndex1: 4, atomIndex2: 0, bondType: 1 }, // O-C1
+    { atomIndex1: 0, atomIndex2: 5, bondType: 1 }, // C1-OH
+    { atomIndex1: 5, atomIndex2: 6, bondType: 1 }, // OH-H
+    { atomIndex1: 1, atomIndex2: 7, bondType: 1 }, // C2-OH
+    { atomIndex1: 7, atomIndex2: 8, bondType: 1 }, // OH-H
+    { atomIndex1: 2, atomIndex2: 9, bondType: 1 }, // C3-OH
+    { atomIndex1: 9, atomIndex2: 10, bondType: 1 }, // OH-H
+    { atomIndex1: 3, atomIndex2: 11, bondType: 1 }, // C4-CH2
+    { atomIndex1: 11, atomIndex2: 12, bondType: 1 }, // CH2-OH
+    { atomIndex1: 12, atomIndex2: 13, bondType: 1 }, // OH-H
+    { atomIndex1: 0, atomIndex2: 14, bondType: 1 }, // C1-H
+    { atomIndex1: 1, atomIndex2: 15, bondType: 1 }, // C2-H
+    { atomIndex1: 2, atomIndex2: 16, bondType: 1 }, // C3-H
+    { atomIndex1: 3, atomIndex2: 17, bondType: 1 }, // C4-H
+    { atomIndex1: 11, atomIndex2: 18, bondType: 1 }, // CH2-H
+    { atomIndex1: 11, atomIndex2: 19, bondType: 1 }  // CH2-H
+  );
   
   return { atoms, bonds };
 }
@@ -1249,7 +1241,7 @@ function createPropene(): Molecule3D {
     atoms: [
       { id: 0, element: 'C', x: 0, y: 0, z: 0 },
       { id: 1, element: 'C', x: 1.34, y: 0, z: 0 },
-      { id: 2, element: 'C', x: 2.2, y: 1.0, z: 0 },
+      { id: 2, element: 'C', x: 2.2, y: 1, z: 0 },
       { id: 3, element: 'H', x: -0.5, y: 0.8, z: 0 },
       { id: 4, element: 'H', x: -0.5, y: -0.8, z: 0 },
       { id: 5, element: 'H', x: 1.84, y: -0.8, z: 0 },
@@ -1275,7 +1267,7 @@ function createButene(): Molecule3D {
     atoms: [
       { id: 0, element: 'C', x: 0, y: 0, z: 0 },
       { id: 1, element: 'C', x: 1.34, y: 0, z: 0 },
-      { id: 2, element: 'C', x: 2.2, y: 1.0, z: 0 },
+      { id: 2, element: 'C', x: 2.2, y: 1, z: 0 },
       { id: 3, element: 'C', x: 3.5, y: 0.8, z: 0 },
       { id: 4, element: 'H', x: -0.5, y: 0.8, z: 0 },
       { id: 5, element: 'H', x: -0.5, y: -0.8, z: 0 },
@@ -1305,7 +1297,7 @@ function createHexene(): Molecule3D {
     atoms: [
       { id: 0, element: 'C', x: 0, y: 0, z: 0 },
       { id: 1, element: 'C', x: 1.34, y: 0, z: 0 },
-      { id: 2, element: 'C', x: 2.2, y: 1.0, z: 0 },
+      { id: 2, element: 'C', x: 2.2, y: 1, z: 0 },
       { id: 3, element: 'C', x: 3.5, y: 0.8, z: 0 },
       { id: 4, element: 'C', x: 4.3, y: 1.8, z: 0 },
       { id: 5, element: 'C', x: 5.6, y: 1.6, z: 0 },
@@ -1383,7 +1375,7 @@ function createCaffeineFromSMILES(): Molecule3D {
       { id: 17, element: 'H', x: 0.5, y: 0, z: 0.8 },
       { id: 18, element: 'H', x: 2.2, y: 2.2, z: 0 },
       { id: 19, element: 'H', x: 8.6, y: -0.4, z: 0 },
-      { id: 20, element: 'H', x: 8.6, y: -2.0, z: 0 },
+      { id: 20, element: 'H', x: 8.6, y: -2, z: 0 },
       { id: 21, element: 'H', x: 8.4, y: -1.2, z: 0.8 },
       { id: 22, element: 'H', x: 3.2, y: -4.4, z: 0 },
       { id: 23, element: 'H', x: 4.2, y: -3.6, z: 0.8 },

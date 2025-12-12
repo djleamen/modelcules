@@ -86,17 +86,23 @@ const InputForm = ({
           const isReadOnly = Boolean(sourceField && !isSourceField);
           const hasValue = identifiers[field.key].trim() !== '';
           
-          const labelClassName = isSourceField 
-            ? 'text-blue-700' 
-            : isReadOnly 
-              ? 'text-gray-500' 
-              : 'text-gray-700';
+          let labelClassName: string;
+          if (isSourceField) {
+            labelClassName = 'text-blue-700';
+          } else if (isReadOnly) {
+            labelClassName = 'text-gray-500';
+          } else {
+            labelClassName = 'text-gray-700';
+          }
           
-          const inputClassName = isSourceField 
-            ? 'border-blue-300 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white/90'
-            : isReadOnly 
-              ? 'border-gray-200 bg-gray-50/90 text-gray-600 cursor-not-allowed'
-              : 'border-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white/90';
+          let inputClassName: string;
+          if (isSourceField) {
+            inputClassName = 'border-blue-300 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white/90';
+          } else if (isReadOnly) {
+            inputClassName = 'border-gray-200 bg-gray-50/90 text-gray-600 cursor-not-allowed';
+          } else {
+            inputClassName = 'border-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white/90';
+          }
           
           return (
             <div key={field.key} className="space-y-1">

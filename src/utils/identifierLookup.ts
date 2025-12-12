@@ -107,57 +107,68 @@ function isCacheValid(timestamp: number): boolean {
   return Date.now() - timestamp < CACHE_DURATION;
 }
 
+// Helper: Check if trimmed value is a known simple molecule
+function isKnownSimpleMolecule(trimmed: string): boolean {
+  const simpleMolecules = ['o', 'c', 'n', 'h', 'f', 'cl', 'br', 'i', 's', 'p'];
+  return simpleMolecules.includes(trimmed);
+}
+
+// Helper: Check if IUPAC name is reasonable
+function isReasonableIUPACName(trimmed: string): boolean {
+  if (!/[a-z]/i.test(trimmed)) return false; // Must contain letters
+  if (trimmed.length < 2) return false; // Too short for any real molecule
+  
+  // Allow single atoms and simple molecules
+  if (isKnownSimpleMolecule(trimmed)) return true;
+  
+  // For longer names, check for reasonable patterns
+  if (trimmed.length >= 3) {
+    // Must contain at least one vowel or be a known chemical term
+    if (!/[aeiouy]/i.test(trimmed)) {
+      const exceptions = ['ch4', 'nh3', 'hcl', 'h2o', 'co2', 'h2s', 'hf', 'hbr', 'hi'];
+      if (!exceptions.includes(trimmed)) return false;
+    }
+    // Reject obvious gibberish (too many consonants in a row)
+    if (/[bcdfghjklmnpqrstvwxyz]{5,}/i.test(trimmed)) return false;
+  }
+  return true;
+}
+
+// Helper: Check if value is a positive number
+function isPositiveNumeric(trimmed: string): boolean {
+  return /^\d+$/.test(trimmed) && Number.parseInt(trimmed, 10) > 0;
+}
+
 // Pre-validation: Check if input seems reasonable for the identifier type
 function isReasonableInput(type: keyof ChemicalIdentifiers, value: string): boolean {
   const trimmed = value.trim().toLowerCase();
   
   // Check for obvious gibberish patterns
   if (trimmed.length < 2) return false;
-  if (/^[^a-z0-9\-[]()=\s]+$/i.test(trimmed)) return false; // Only special chars
+  if (/^[^a-z0-9\-[()=\s]+$/i.test(trimmed)) return false; // Only special chars
   if (/^[a-z]{1,3}$/.test(trimmed) && !['o', 'c', 'n', 'h'].includes(trimmed)) return false; // Very short unless common atoms
   
   switch (type) {
     case 'iupacName':
-      // IUPAC names should contain reasonable chemical characters
-      if (!/[a-z]/i.test(trimmed)) return false; // Must contain letters
-      if (trimmed.length < 2) return false; // Too short for any real molecule
-      // Allow single atoms and simple molecules
-      if (['o', 'c', 'n', 'h', 'f', 'cl', 'br', 'i', 's', 'p'].includes(trimmed)) return true;
-      // For longer names, check for reasonable patterns
-      if (trimmed.length >= 3) {
-        // Must contain at least one vowel or be a known chemical term
-        if (!/[aeiouy]/i.test(trimmed)) {
-          const exceptions = ['ch4', 'nh3', 'hcl', 'h2o', 'co2', 'h2s', 'hf', 'hbr', 'hi'];
-          if (!exceptions.includes(trimmed)) return false;
-        }
-        // Reject obvious gibberish (too many consonants in a row)
-        if (/[bcdfghjklmnpqrstvwxyz]{5,}/i.test(trimmed)) return false;
-      }
-      return true;
+      return isReasonableIUPACName(trimmed);
       
     case 'casNumber':
-      // Must match CAS pattern exactly
       return /^\d{2,7}-\d{2}-\d$/.test(trimmed);
       
     case 'pubchemCID':
     case 'chemSpider':
-      // Must be numeric
-      return /^\d+$/.test(trimmed) && parseInt(trimmed) > 0;
+      return isPositiveNumeric(trimmed);
       
     case 'smiles':
-      // SMILES should contain valid SMILES characters
       return /^[A-Za-z0-9@+\-[\]()=#$:.\\/ ]+$/.test(trimmed);
       
     case 'inchi':
-      // InChI must start with InChI=
       return trimmed.startsWith('inchi=');
       
     case 'unii':
-      // UNII is exactly 10 alphanumeric characters
       return /^[A-Z0-9]{10}$/i.test(trimmed);
       
     default:
-      // For other types, just check basic sanity
       return trimmed.length >= 2 && /[a-z0-9]/i.test(trimmed);
   }
 }
@@ -195,7 +206,7 @@ export async function lookupChemicalIdentifiers(
       success: true,
       identifiers: cached.identifiers,
       source: `${cached.source} (cached)`,
-      confidence: 1.0
+      confidence: 1
     };
   }
 
@@ -420,7 +431,7 @@ async function getPubChemCID(
       
       case 'casNumber': {
         // Remove any spaces or hyphens for API call
-        const cleanCAS = sourceValue.replace(/[\s-]/g, '');
+        const cleanCAS = sourceValue.replaceAll(' ', '').replaceAll('-', '');
         url = `${baseUrl}/compound/name/${encodeURIComponent(cleanCAS)}/cids/JSON`;
         break;
       }
@@ -457,70 +468,92 @@ async function getPubChemCID(
   }
 }
 
+// Helper: Fetch compound properties from PubChem
+async function fetchPubChemProperties(
+  cid: string,
+  db: DatabaseConfig,
+  identifiers: Partial<ChemicalIdentifiers>
+): Promise<void> {
+  const propsUrl = `${db.baseUrl}/compound/cid/${cid}/property/IUPACName,CanonicalSMILES,InChI,MolecularFormula/JSON`;
+  
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), db.timeout);
+  const propsResponse = await fetch(propsUrl, { signal: controller.signal });
+  clearTimeout(timeoutId);
+  
+  if (propsResponse.ok) {
+    const propsData = await propsResponse.json();
+    const props = propsData.PropertyTable?.Properties?.[0];
+    
+    if (props) {
+      if (props.IUPACName) identifiers.iupacName = props.IUPACName;
+      if (props.CanonicalSMILES) identifiers.smiles = props.CanonicalSMILES;
+      if (props.InChI) identifiers.inchi = props.InChI;
+    }
+  }
+}
+
+// Helper: Extract identifier from synonym if it matches pattern
+function extractIdentifierFromSynonym(
+  synonym: string,
+  identifiers: Partial<ChemicalIdentifiers>
+): void {
+  // CAS numbers
+  if (!identifiers.casNumber && VALIDATION_PATTERNS.casNumber?.test(synonym)) {
+    identifiers.casNumber = synonym;
+  }
+  // UNII codes
+  if (!identifiers.unii && VALIDATION_PATTERNS.unii?.test(synonym)) {
+    identifiers.unii = synonym;
+  }
+  // EC numbers
+  if (!identifiers.ecNumber && VALIDATION_PATTERNS.ecNumber?.test(synonym)) {
+    identifiers.ecNumber = synonym;
+  }
+  // E numbers
+  if (!identifiers.eNumber && VALIDATION_PATTERNS.eNumber?.test(synonym)) {
+    identifiers.eNumber = synonym;
+  }
+  // RTECS numbers
+  if (!identifiers.rtecsNumber && VALIDATION_PATTERNS.rtecsNumber?.test(synonym)) {
+    identifiers.rtecsNumber = synonym;
+  }
+}
+
+// Helper: Fetch synonyms from PubChem and extract identifiers
+async function fetchPubChemSynonyms(
+  cid: string,
+  db: DatabaseConfig,
+  identifiers: Partial<ChemicalIdentifiers>
+): Promise<void> {
+  const synonymsUrl = `${db.baseUrl}/compound/cid/${cid}/synonyms/JSON`;
+  
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), db.timeout);
+  const synonymsResponse = await fetch(synonymsUrl, { signal: controller.signal });
+  clearTimeout(timeoutId);
+  
+  if (synonymsResponse.ok) {
+    const synonymsData = await synonymsResponse.json();
+    const synonyms = synonymsData.InformationList?.Information?.[0]?.Synonym || [];
+    
+    // Extract various identifier types from synonyms
+    for (const synonym of synonyms) {
+      extractIdentifierFromSynonym(synonym, identifiers);
+    }
+  }
+}
+
 // Get all identifiers from PubChem CID
 async function getAllIdentifiersFromPubChemCID(cid: string, db: DatabaseConfig): Promise<Partial<ChemicalIdentifiers>> {
   const identifiers: Partial<ChemicalIdentifiers> = {};
 
   try {
     // Get compound properties (includes IUPAC name, SMILES, InChI, etc.)
-    const propsUrl = `${db.baseUrl}/compound/cid/${cid}/property/IUPACName,CanonicalSMILES,InChI,MolecularFormula/JSON`;
-    
-    const controller1 = new AbortController();
-    const timeoutId1 = setTimeout(() => controller1.abort(), db.timeout);
-    const propsResponse = await fetch(propsUrl, { signal: controller1.signal });
-    clearTimeout(timeoutId1);
-    
-    if (propsResponse.ok) {
-      const propsData = await propsResponse.json();
-      const props = propsData.PropertyTable?.Properties?.[0];
-      
-      if (props) {
-        if (props.IUPACName) identifiers.iupacName = props.IUPACName;
-        if (props.CanonicalSMILES) identifiers.smiles = props.CanonicalSMILES;
-        if (props.InChI) identifiers.inchi = props.InChI;
-      }
-    }
+    await fetchPubChemProperties(cid, db, identifiers);
 
     // Get synonyms (includes CAS numbers and other identifiers)
-    const synonymsUrl = `${db.baseUrl}/compound/cid/${cid}/synonyms/JSON`;
-    
-    const controller2 = new AbortController();
-    const timeoutId2 = setTimeout(() => controller2.abort(), db.timeout);
-    const synonymsResponse = await fetch(synonymsUrl, { signal: controller2.signal });
-    clearTimeout(timeoutId2);
-    
-    if (synonymsResponse.ok) {
-      const synonymsData = await synonymsResponse.json();
-      const synonyms = synonymsData.InformationList?.Information?.[0]?.Synonym || [];
-      
-      // Extract various identifier types from synonyms
-      for (const synonym of synonyms) {
-        // CAS numbers (format: XXX-XX-X or XXXXXX-XX-X)
-        if (!identifiers.casNumber && VALIDATION_PATTERNS.casNumber?.test(synonym)) {
-          identifiers.casNumber = synonym;
-        }
-        
-        // UNII codes
-        if (!identifiers.unii && VALIDATION_PATTERNS.unii?.test(synonym)) {
-          identifiers.unii = synonym;
-        }
-        
-        // EC numbers
-        if (!identifiers.ecNumber && VALIDATION_PATTERNS.ecNumber?.test(synonym)) {
-          identifiers.ecNumber = synonym;
-        }
-        
-        // E numbers
-        if (!identifiers.eNumber && VALIDATION_PATTERNS.eNumber?.test(synonym)) {
-          identifiers.eNumber = synonym;
-        }
-        
-        // RTECS numbers
-        if (!identifiers.rtecsNumber && VALIDATION_PATTERNS.rtecsNumber?.test(synonym)) {
-          identifiers.rtecsNumber = synonym;
-        }
-      }
-    }
+    await fetchPubChemSynonyms(cid, db, identifiers);
 
     // Set the PubChem CID
     identifiers.pubchemCID = cid;
