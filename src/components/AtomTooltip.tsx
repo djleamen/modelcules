@@ -58,7 +58,6 @@ export const AtomTooltip = ({ element, bondCount, position }: AtomTooltipProps) 
 
 interface InteractiveAtomProps {
   element: string;
-  atomIndex: number;
   bondCount: number;
   position: [number, number, number];
   radius: number;

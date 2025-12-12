@@ -26,91 +26,87 @@ function App() {
   const [lookupError, setLookupError] = useState<string | null>(null);
   const [lookupSource, setLookupSource] = useState<string | null>(null);
 
+  const clearIdentifiers = useCallback(() => {
+    setIdentifiers({
+      iupacName: '',
+      casNumber: '',
+      chemSpider: '',
+      echaInfoCard: '',
+      ecNumber: '',
+      eNumber: '',
+      pubchemCID: '',
+      rtecsNumber: '',
+      unii: '',
+      compToxDashboard: '',
+      inchi: '',
+      smiles: ''
+    });
+    setSourceField(null);
+  }, []);
+
+  const performLookup = useCallback(async (field: keyof ChemicalIdentifiers, value: string) => {
+    const normalizedValue = normalizeIdentifier(field, value);
+    if (!validateIdentifier(field, normalizedValue)) {
+      return { error: `Invalid ${field} format. Please check your input.` };
+    }
+
+    let foundIdentifiers = getLocalIdentifiers(field, value);
+    let source = 'Local Database';
+
+    if (!foundIdentifiers) {
+      const result = await lookupChemicalIdentifiers(field, value);
+      if (result.success && result.identifiers) {
+        foundIdentifiers = result.identifiers;
+        source = result.source || 'External Database';
+        
+        if (result.confidence !== undefined) {
+          console.log(`Lookup confidence: ${(result.confidence * 100).toFixed(1)}%`);
+        }
+      } else {
+        return { error: result.error || 'Unknown lookup error' };
+      }
+    }
+
+    if (foundIdentifiers) {
+      console.log(`Successfully populated identifiers from ${source}`);
+      return { identifiers: foundIdentifiers, source };
+    }
+    
+    return { error: 'No identifiers found' };
+  }, []);
+
   const handleInputChange = useCallback(async (field: keyof ChemicalIdentifiers, value: string) => {
-    // Clear any previous errors
     setLookupError(null);
     setLookupSource(null);
     
-    // If the field is being cleared, clear all fields and reset source
     if (!value.trim()) {
       if (field === sourceField) {
-        setIdentifiers({
-          iupacName: '',
-          casNumber: '',
-          chemSpider: '',
-          echaInfoCard: '',
-          ecNumber: '',
-          eNumber: '',
-          pubchemCID: '',
-          rtecsNumber: '',
-          unii: '',
-          compToxDashboard: '',
-          inchi: '',
-          smiles: ''
-        });
-        setSourceField(null);
+        clearIdentifiers();
       } else {
-        // User is clearing a non-source field, just clear that field
-        setIdentifiers(prev => ({
-          ...prev,
-          [field]: ''
-        }));
+        setIdentifiers(prev => ({ ...prev, [field]: '' }));
       }
       return;
     }
 
-    // Set the source field and update the identifier
     setSourceField(field);
-    setIdentifiers(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setIdentifiers(prev => ({ ...prev, [field]: value }));
 
-    // Try to auto-populate other fields with enhanced lookup
     setIsLookingUp(true);
     try {
-      // Clean expired cache entries before lookup
       cleanExpiredCache();
       
-      // Early validation - check if input looks reasonable
-      const normalizedValue = normalizeIdentifier(field, value);
-      if (!validateIdentifier(field, normalizedValue)) {
-        setLookupError(`Invalid ${field} format. Please check your input.`);
-        setIsLookingUp(false);
-        return;
-      }
+      const result = await performLookup(field, value);
       
-      // First try local lookup for common compounds (fastest)
-      let foundIdentifiers = getLocalIdentifiers(field, value);
-      let source = 'Local Database';
-      
-      // If not found locally, try comprehensive API lookup
-      if (!foundIdentifiers) {
-        const result = await lookupChemicalIdentifiers(field, value);
-        if (result.success && result.identifiers) {
-          foundIdentifiers = result.identifiers;
-          source = result.source || 'External Database';
-          
-          // Log confidence score for debugging
-          if (result.confidence !== undefined) {
-            console.log(`Lookup confidence: ${(result.confidence * 100).toFixed(1)}%`);
-          }
-        } else {
-          // Set error message from enhanced lookup
-          setLookupError(result.error || 'Unknown lookup error');
-          console.warn('Lookup failed:', result.error);
-        }
-      }
-
-      if (foundIdentifiers) {
-        setLookupSource(source);
+      if (result.error) {
+        setLookupError(result.error);
+        console.warn('Lookup failed:', result.error);
+      } else if (result.identifiers) {
+        setLookupSource(result.source || null);
         setIdentifiers(prev => ({
           ...prev,
-          ...foundIdentifiers,
-          [field]: value // Keep the original input value for the source field
+          ...result.identifiers,
+          [field]: value
         }));
-        
-        console.log(`Successfully populated identifiers from ${source}`);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
@@ -119,7 +115,7 @@ function App() {
     } finally {
       setIsLookingUp(false);
     }
-  }, [sourceField]);
+  }, [sourceField, clearIdentifiers, performLookup]);
 
   const handleClearAll = useCallback(() => {
     setIdentifiers({
@@ -211,8 +207,17 @@ function App() {
       {/* Backdrop overlay */}
       {isPanelOpen && (
         <div 
+          role="button"
+          tabIndex={0}
           className="absolute inset-0 bg-black/10 z-10"
           onClick={() => setIsPanelOpen(false)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              setIsPanelOpen(false);
+            }
+          }}
+          aria-label="Close menu"
         />
       )}
     </div>

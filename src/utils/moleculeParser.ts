@@ -56,6 +56,44 @@ export async function parseMolecule(
   }
 }
 
+// Helper function for partial name matching
+function tryPartialMatches(lowerName: string): Molecule3D | null {
+  if (lowerName.includes('methyl') && lowerName.includes('benzene')) {
+    return createToluene();
+  }
+  if (lowerName.includes('alcohol') || lowerName.includes('ol')) {
+    return createEthanol(); // Default alcohol
+  }
+  if (lowerName.includes('acid')) {
+    return createAceticAcid(); // Default acid
+  }
+  return null;
+}
+
+// Helper function for alkene pattern matching
+function tryMatchAlkene(lowerName: string): Molecule3D | null {
+  if (!lowerName.includes('ene')) return null;
+  
+  if (lowerName.includes('hex')) return createHexene();
+  if (lowerName.includes('but')) return createButene();
+  if (lowerName.includes('prop')) return createPropene();
+  if (lowerName.includes('eth')) return createEthene();
+  return createEthene(); // Default alkene
+}
+
+// Helper function for alkane pattern matching
+function tryMatchAlkane(lowerName: string): Molecule3D | null {
+  if (!lowerName.includes('ane')) return null;
+  
+  if (lowerName.includes('hex')) return createHexane();
+  if (lowerName.includes('pent')) return createPentane();
+  if (lowerName.includes('but')) return createButane();
+  if (lowerName.includes('prop')) return createPropane();
+  if (lowerName.includes('eth')) return createEthane();
+  if (lowerName.includes('meth')) return createMethane();
+  return null;
+}
+
 // IUPAC Name parser - converts common IUPAC names to 3D structures
 async function parseIUPACName(iupacName: string, _allIdentifiers?: Partial<ChemicalIdentifiers>): Promise<Molecule3D> {
   const lowerName = iupacName.toLowerCase().trim();
@@ -133,34 +171,16 @@ async function parseIUPACName(iupacName: string, _allIdentifiers?: Partial<Chemi
   }
 
   // Try partial matches for common patterns
-  if (lowerName.includes('methyl') && lowerName.includes('benzene')) {
-    return createToluene();
-  }
-  if (lowerName.includes('alcohol') || lowerName.includes('ol')) {
-    return createEthanol(); // Default alcohol
-  }
-  if (lowerName.includes('acid')) {
-    return createAceticAcid(); // Default acid
-  }
+  const partialMatch = tryPartialMatches(lowerName);
+  if (partialMatch) return partialMatch;
   
   // Pattern matching for alkenes
-  if (lowerName.includes('ene')) {
-    if (lowerName.includes('hex')) return createHexene();
-    if (lowerName.includes('but')) return createButene();
-    if (lowerName.includes('prop')) return createPropene();
-    if (lowerName.includes('eth')) return createEthene();
-    return createEthene(); // Default alkene
-  }
+  const alkeneMatch = tryMatchAlkene(lowerName);
+  if (alkeneMatch) return alkeneMatch;
   
   // Pattern matching for alkanes
-  if (lowerName.includes('ane')) {
-    if (lowerName.includes('hex')) return createHexane();
-    if (lowerName.includes('pent')) return createPentane();
-    if (lowerName.includes('but')) return createButane();
-    if (lowerName.includes('prop')) return createPropane();
-    if (lowerName.includes('eth')) return createEthane();
-    if (lowerName.includes('meth')) return createMethane();
-  }
+  const alkaneMatch = tryMatchAlkane(lowerName);
+  if (alkaneMatch) return alkaneMatch;
 
   // For very complex molecules, return a placeholder
   if (lowerName.length > 20 || lowerName.includes('lambda') || lowerName.includes('phosphane')) {
@@ -289,7 +309,8 @@ function parseInChI(inchi: string): Molecule3D {
   }
 
   // Try to parse molecular formula from InChI
-  const formulaMatch = cleanInChI.match(/InChI=1S\/([^\/]+)/);
+  const formulaRegex = /InChI=1S\/([^/]+)/;
+  const formulaMatch = formulaRegex.exec(cleanInChI);
   if (formulaMatch) {
     const formula = formulaMatch[1];
     return parseByFormula(formula);
@@ -518,29 +539,30 @@ function createBenzene(): Molecule3D {
   // Create hexagonal ring
   for (let i = 0; i < 6; i++) {
     const angle = (i * Math.PI) / 3;
-    atoms.push({
-      id: i,
-      element: 'C',
-      x: radius * Math.cos(angle),
-      y: radius * Math.sin(angle),
-      z: 0
-    });
+    // Add carbon and hydrogen atoms together
+    atoms.push(
+      {
+        id: i,
+        element: 'C',
+        x: radius * Math.cos(angle),
+        y: radius * Math.sin(angle),
+        z: 0
+      },
+      {
+        id: i + 6,
+        element: 'H',
+        x: (radius + 1.1) * Math.cos(angle),
+        y: (radius + 1.1) * Math.sin(angle),
+        z: 0
+      }
+    );
 
-    // Add hydrogen
-    atoms.push({
-      id: i + 6,
-      element: 'H',
-      x: (radius + 1.1) * Math.cos(angle),
-      y: (radius + 1.1) * Math.sin(angle),
-      z: 0
-    });
-
-    // C-H bond
-    bonds.push({ atomIndex1: i, atomIndex2: i + 6, bondType: 1 });
-    
-    // C-C bond (alternating single/double for aromatic)
+    // Add C-H bond and C-C bond together
     const nextCarbon = (i + 1) % 6;
-    bonds.push({ atomIndex1: i, atomIndex2: nextCarbon, bondType: i % 2 === 0 ? 2 : 1 });
+    bonds.push(
+      { atomIndex1: i, atomIndex2: i + 6, bondType: 1 },
+      { atomIndex1: i, atomIndex2: nextCarbon, bondType: i % 2 === 0 ? 2 : 1 }
+    );
   }
 
   return { atoms, bonds };
@@ -835,7 +857,7 @@ function createIsopentane(): Molecule3D {
     atoms: [
       { id: 0, element: 'C', x: 0, y: 0, z: 0 },       // Central carbon
       { id: 1, element: 'C', x: 1.5, y: 0, z: 0 },     // C2
-      { id: 2, element: 'C', x: 3.0, y: 0, z: 0 },     // C3
+      { id: 2, element: 'C', x: 3, y: 0, z: 0 },     // C3
       { id: 3, element: 'C', x: 4.5, y: 0, z: 0 },     // C4
       { id: 4, element: 'C', x: 1.5, y: 1.5, z: 0 },   // Methyl branch
       // Hydrogens for C1
@@ -845,16 +867,16 @@ function createIsopentane(): Molecule3D {
       // Hydrogens for C2 (has branch)
       { id: 8, element: 'H', x: 1.5, y: -1, z: 0.5 },
       // Hydrogens for C3
-      { id: 9, element: 'H', x: 3.0, y: 0.5, z: 0.5 },
-      { id: 10, element: 'H', x: 3.0, y: -0.5, z: 0.5 },
+      { id: 9, element: 'H', x: 3, y: 0.5, z: 0.5 },
+      { id: 10, element: 'H', x: 3, y: -0.5, z: 0.5 },
       // Hydrogens for C4
-      { id: 11, element: 'H', x: 5.0, y: 0.5, z: 0.5 },
-      { id: 12, element: 'H', x: 5.0, y: -0.5, z: 0.5 },
-      { id: 13, element: 'H', x: 5.0, y: 0, z: -1 },
+      { id: 11, element: 'H', x: 5, y: 0.5, z: 0.5 },
+      { id: 12, element: 'H', x: 5, y: -0.5, z: 0.5 },
+      { id: 13, element: 'H', x: 5, y: 0, z: -1 },
       // Hydrogens for methyl branch
-      { id: 14, element: 'H', x: 1.0, y: 2.0, z: 0.5 },
-      { id: 15, element: 'H', x: 2.0, y: 2.0, z: 0.5 },
-      { id: 16, element: 'H', x: 1.5, y: 2.0, z: -1 },
+      { id: 14, element: 'H', x: 1, y: 2, z: 0.5 },
+      { id: 15, element: 'H', x: 2, y: 2, z: 0.5 },
+      { id: 16, element: 'H', x: 1.5, y: 2, z: -1 },
     ],
     bonds: [
       { atomIndex1: 0, atomIndex2: 1, bondType: 1 },
@@ -888,16 +910,16 @@ function createPropanol(): Molecule3D {
     atoms: [
       { id: 0, element: 'C', x: 0, y: 0, z: 0 },
       { id: 1, element: 'C', x: 1.5, y: 0, z: 0 },
-      { id: 2, element: 'C', x: 3.0, y: 0, z: 0 },
-      { id: 3, element: 'O', x: 4.0, y: 0, z: 0 },
+      { id: 2, element: 'C', x: 3, y: 0, z: 0 },
+      { id: 3, element: 'O', x: 4, y: 0, z: 0 },
       // Hydrogens
       { id: 4, element: 'H', x: -0.5, y: 0.5, z: 0.5 },
       { id: 5, element: 'H', x: -0.5, y: -0.5, z: 0.5 },
       { id: 6, element: 'H', x: -0.5, y: 0, z: -1 },
       { id: 7, element: 'H', x: 1.5, y: 0.5, z: 0.5 },
       { id: 8, element: 'H', x: 1.5, y: -0.5, z: 0.5 },
-      { id: 9, element: 'H', x: 3.0, y: 0.5, z: 0.5 },
-      { id: 10, element: 'H', x: 3.0, y: -0.5, z: 0.5 },
+      { id: 9, element: 'H', x: 3, y: 0.5, z: 0.5 },
+      { id: 10, element: 'H', x: 3, y: -0.5, z: 0.5 },
       { id: 11, element: 'H', x: 4.5, y: 0, z: 0 },
     ],
     bonds: [
@@ -922,7 +944,7 @@ function createIsopropanol(): Molecule3D {
     atoms: [
       { id: 0, element: 'C', x: 0, y: 0, z: 0 },
       { id: 1, element: 'C', x: 1.5, y: 0, z: 0 },
-      { id: 2, element: 'C', x: 3.0, y: 0, z: 0 },
+      { id: 2, element: 'C', x: 3, y: 0, z: 0 },
       { id: 3, element: 'O', x: 1.5, y: 1.2, z: 0 },
       // Hydrogens
       { id: 4, element: 'H', x: -0.5, y: 0.5, z: 0.5 },
@@ -1292,12 +1314,12 @@ function createHexene(): Molecule3D {
       { id: 8, element: 'H', x: 1.84, y: -0.8, z: 0 },
       { id: 9, element: 'H', x: 1.7, y: 1.8, z: 0 },
       { id: 10, element: 'H', x: 3.8, y: 1.6, z: 0 },
-      { id: 11, element: 'H', x: 3.2, y: 0.0, z: 0 },
+      { id: 11, element: 'H', x: 3.2, y: 0, z: 0 },
       { id: 12, element: 'H', x: 3.9, y: 2.6, z: 0 },
-      { id: 13, element: 'H', x: 4.6, y: 2.0, z: 0.8 },
-      { id: 14, element: 'H', x: 6.0, y: 2.4, z: 0 },
-      { id: 15, element: 'H', x: 6.2, y: 1.0, z: 0.8 },
-      { id: 16, element: 'H', x: 6.2, y: 1.0, z: -0.8 },
+      { id: 13, element: 'H', x: 4.6, y: 2, z: 0.8 },
+      { id: 14, element: 'H', x: 6, y: 2.4, z: 0 },
+      { id: 15, element: 'H', x: 6.2, y: 1, z: 0.8 },
+      { id: 16, element: 'H', x: 6.2, y: 1, z: -0.8 },
     ],
     bonds: [
       { atomIndex1: 0, atomIndex2: 1, bondType: 2 }, // C=C double bond (2-hexene)

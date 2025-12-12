@@ -36,8 +36,8 @@ const elementRadii: { [key: string]: number } = {
   'Cl': 0.99,
   'Br': 1.14,
   'I': 1.33,
-  'S': 1.0,
-  'P': 1.0,
+  'S': 1,
+  'P': 1,
   'B': 0.85,
   'Si': 1.1,
   'X': 0.8,   // Placeholder atoms
@@ -117,7 +117,6 @@ const Molecule3DComponent = ({ molecule }: Molecule3DComponentProps) => {
         <InteractiveAtom
           key={`atom-${atom.id}`}
           element={atom.element}
-          atomIndex={atom.id}
           bondCount={atomBondCounts[atom.id] || 0}
           position={[atom.x, atom.y, atom.z]}
           radius={elementRadii[atom.element] || elementRadii.default}
@@ -129,8 +128,14 @@ const Molecule3DComponent = ({ molecule }: Molecule3DComponentProps) => {
       {bondElements.map((bondElement) => {
         if (!bondElement) return null;
         
-        const radius = bondElement.bondType === 1 ? 0.1 : 
-                      bondElement.bondType === 2 ? 0.08 : 0.06;
+        let radius: number;
+        if (bondElement.bondType === 1) {
+          radius = 0.1;
+        } else if (bondElement.bondType === 2) {
+          radius = 0.08;
+        } else {
+          radius = 0.06;
+        }
 
         if (bondElement.bondType === 1) {
           // Single bond

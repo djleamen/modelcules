@@ -17,7 +17,7 @@ const MoleculeViewer: React.FC<MoleculeViewerProps> = ({ molecule, allIdentifier
 
   useEffect(() => {
     const loadMolecule = async () => {
-      if (!molecule || !molecule.value.trim()) {
+      if (!molecule?.value.trim()) {
         setMolecule3D(null);
         setError(null);
         return;
@@ -42,7 +42,7 @@ const MoleculeViewer: React.FC<MoleculeViewerProps> = ({ molecule, allIdentifier
     return () => clearTimeout(timeoutId);
   }, [molecule, allIdentifiers]);
 
-  if (!molecule || !molecule.value.trim()) {
+  if (!molecule?.value.trim()) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
         <div className="text-center">

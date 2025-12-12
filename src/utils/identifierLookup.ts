@@ -46,7 +46,7 @@ const VALIDATION_PATTERNS: Partial<Record<keyof ChemicalIdentifiers, RegExp>> = 
   chemSpider: /^\d+$/,
   ecNumber: /^\d{3}-\d{3}-\d$/,
   eNumber: /^E\d{3,4}[a-z]?$/i,
-  smiles: /^[A-Za-z0-9@+\-\[\]()=#$:.\\\/]+$/,
+  smiles: /^[A-Za-z0-9@+\-[\]()=#$:.\\/ ]+$/,
   inchi: /^InChI=1S?\//,
   rtecsNumber: /^[A-Z]{2}\d{7}$/,
   compToxDashboard: /^DTXSID\d{7,}$/
@@ -113,7 +113,7 @@ function isReasonableInput(type: keyof ChemicalIdentifiers, value: string): bool
   
   // Check for obvious gibberish patterns
   if (trimmed.length < 2) return false;
-  if (/^[^a-z0-9\-\[\]()=\s]+$/i.test(trimmed)) return false; // Only special chars
+  if (/^[^a-z0-9\-[]()=\s]+$/i.test(trimmed)) return false; // Only special chars
   if (/^[a-z]{1,3}$/.test(trimmed) && !['o', 'c', 'n', 'h'].includes(trimmed)) return false; // Very short unless common atoms
   
   switch (type) {
@@ -146,7 +146,7 @@ function isReasonableInput(type: keyof ChemicalIdentifiers, value: string): bool
       
     case 'smiles':
       // SMILES should contain valid SMILES characters
-      return /^[A-Za-z0-9@+\-\[\]()=#$:.\\\/]+$/.test(trimmed);
+      return /^[A-Za-z0-9@+\-[\]()=#$:.\\/ ]+$/.test(trimmed);
       
     case 'inchi':
       // InChI must start with InChI=
@@ -200,7 +200,6 @@ export async function lookupChemicalIdentifiers(
   }
 
   // Try multiple databases in order of priority
-  const errors: string[] = [];
   
   // First try local lookup (fastest)
   const localResult = getLocalIdentifiers(sourceType, normalizedValue);
@@ -211,12 +210,13 @@ export async function lookupChemicalIdentifiers(
       success: true,
       identifiers: localResult,
       source: 'Local Database',
-      confidence: 1.0
+      confidence: 1
     };
   }
 
   // Try external databases
-  for (const db of DATABASES.sort((a, b) => b.priority - a.priority)) {
+  const sortedDatabases = [...DATABASES].sort((a, b) => b.priority - a.priority);
+  for (const db of sortedDatabases) {
     try {
       const result = await lookupFromDatabase(db, sourceType, normalizedValue);
       if (result.success && result.identifiers) {
@@ -231,7 +231,6 @@ export async function lookupChemicalIdentifiers(
         };
       }
     } catch (error) {
-      errors.push(`${db.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
       console.warn(`Database ${db.name} failed:`, error);
     }
   }
@@ -248,11 +247,11 @@ function calculateConfidence(identifiers: Partial<ChemicalIdentifiers>, sourceTy
   const hasSourceType = Boolean(identifiers[sourceType]);
   
   // Base confidence on number of identifiers found
-  let confidence = Math.min(identifierCount / 8, 1.0); // Max confidence with 8+ identifiers
+  let confidence = Math.min(identifierCount / 8, 1); // Max confidence with 8+ identifiers
   
   // Boost confidence if source identifier is confirmed
   if (hasSourceType) {
-    confidence = Math.min(confidence + 0.2, 1.0);
+    confidence = Math.min(confidence + 0.2, 1);
   }
   
   // Minimum confidence for any successful lookup
@@ -419,11 +418,12 @@ async function getPubChemCID(
         url = `${baseUrl}/compound/name/${encodeURIComponent(sourceValue)}/cids/JSON`;
         break;
       
-      case 'casNumber':
+      case 'casNumber': {
         // Remove any spaces or hyphens for API call
         const cleanCAS = sourceValue.replace(/[\s-]/g, '');
         url = `${baseUrl}/compound/name/${encodeURIComponent(cleanCAS)}/cids/JSON`;
         break;
+      }
       
       case 'smiles':
         url = `${baseUrl}/compound/smiles/${encodeURIComponent(sourceValue)}/cids/JSON`;
