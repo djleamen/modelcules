@@ -1,3 +1,12 @@
+/**
+ * AtomTooltip and InteractiveAtom Components
+ * This file defines two React components for use in a 3D molecular visualization:
+ * 1. AtomTooltip: Displays a tooltip with information about an atom when hovered over.
+ * 2. InteractiveAtom: Represents an atom in 3D space that responds to hover events by scaling up and showing the tooltip.
+ * 
+ * Written by DJ Leamen, 2025-2026
+ */
+
 import { useState } from 'react';
 import { ThreeEvent } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
@@ -9,13 +18,31 @@ interface AtomTooltipProps {
 }
 
 export const AtomTooltip = ({ element, bondCount, position }: AtomTooltipProps) => {
+  /**
+   * Get a description of the bond count
+   * 
+   * @param element Chemical element symbol
+   * @param bondCount Number of bonds 
+   * @param position 3D position of the tooltip
+   * @returns Description string
+   */
   const getBondDescription = (count: number) => {
+    /**
+     * Returns a string description based on the bond count
+     * @param count Number of bonds
+     * @returns Description string
+     */
     if (count === 0) return 'no bonds';
     if (count === 1) return '1 bond';
     return `${count} bonds`;
   };
 
   const getAtomDescription = (element: string) => {
+    /**
+     * Returns a string description based on the element symbol
+     * @param element Chemical element symbol
+     * @returns Description string
+     */
     if (element === 'X') return 'Complex structure';
     return `${element} atom`;
   };
@@ -75,6 +102,18 @@ export const InteractiveAtom = ({
   onHover,
   children 
 }: InteractiveAtomProps) => {
+  /**
+   * State to track if the atom is hovered
+   * 
+   * @param element Chemical element symbol
+   * @param bondCount Number of bonds 
+   * @param position 3D position of the atom
+   * @param radius Radius of the atom sphere
+   * @param color Color of the atom sphere
+   * @param onHover Optional callback for hover state changes
+   * @param children Optional child components (e.g., bonds)
+   * @returns InteractiveAtom component
+   */
   const [hovered, setHovered] = useState(false);
 
   const handlePointerOver = (event: ThreeEvent<PointerEvent>) => {
