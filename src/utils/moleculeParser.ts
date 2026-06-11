@@ -162,7 +162,7 @@ async function parseIUPACName(iupacName: string, _allIdentifiers?: Partial<Chemi
 
   // Try to get SMILES from PubChem for complex molecules
   try {
-    const smiles = await getSmikesFromIUPAC(iupacName);
+    const smiles = await getSmilesFromIUPAC(iupacName);
     if (smiles) {
       return parseSMILES(smiles);
     }
@@ -191,7 +191,7 @@ async function parseIUPACName(iupacName: string, _allIdentifiers?: Partial<Chemi
 }
 
 // Helper function to get SMILES from IUPAC name using PubChem
-async function getSmikesFromIUPAC(iupacName: string): Promise<string | null> {
+async function getSmilesFromIUPAC(iupacName: string): Promise<string | null> {
   try {
     const url = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(iupacName)}/property/CanonicalSMILES/JSON`;
     const response = await fetch(url);
@@ -835,6 +835,7 @@ function createSimpleAlkane(length: number): Molecule3D {
       });
       
       bonds.push({ atomIndex1: i, atomIndex2: hydrogenId, bondType: 1 });
+      hydrogenId++;
     }
   }
   
