@@ -570,7 +570,9 @@ export function getLocalIdentifiers(
   sourceType: keyof ChemicalIdentifiers,
   sourceValue: string
 ): Partial<ChemicalIdentifiers> | null {
-  const lowerValue = sourceValue.toLowerCase().trim();
+  const trimmedValue = sourceValue.trim();
+  const lowerValue = trimmedValue.toLowerCase();
+  const lookupValue = sourceType === 'smiles' ? trimmedValue : lowerValue;
   
   // Comprehensive database of common compounds
   const commonCompounds: { [key: string]: Partial<ChemicalIdentifiers> } = {
@@ -1080,7 +1082,7 @@ export function getLocalIdentifiers(
   };
 
   // Try direct lookup first
-  const compound = commonCompounds[lowerValue];
+  const compound = commonCompounds[lookupValue];
   if (compound) {
     return compound;
   }
@@ -1088,7 +1090,15 @@ export function getLocalIdentifiers(
   // Try to find by any matching identifier field
   for (const [, identifiers] of Object.entries(commonCompounds)) {
     for (const [idType, idValue] of Object.entries(identifiers)) {
-      if (idType === sourceType && idValue?.toLowerCase() === lowerValue) {
+      if (idType !== sourceType) {
+        continue;
+      }
+
+      if (sourceType === 'smiles') {
+        if (idValue?.trim() === trimmedValue) {
+          return identifiers;
+        }
+      } else if (idValue?.toLowerCase() === lowerValue) {
         return identifiers;
       }
     }

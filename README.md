@@ -85,10 +85,10 @@ InputForm → identifierLookup → Local DB → PubChem API → moleculeParser �
 - **Confidence Scoring**: Quality assessment based on data completeness
 
 #### **2. Molecular Structure Parser (`moleculeParser.ts`)**
-- **SMILES Parser**: Pattern matching for common molecular structures
-- **3D Coordinate Generation**: Hand-crafted coordinates for accurate visualization
-- **Fallback System**: Multiple parsing strategies for unknown compounds
-- **Structure Library**: 70+ pre-defined molecular structures
+- **PubChem-Backed Parsing**: Resolves identifiers to PubChem CIDs, then loads real structure records
+- **3D-First Coordinates**: Uses PubChem 3D conformers when available, with 2D coordinate fallback
+- **Cross-Identifier Resolution**: Supports SMILES, InChI, IUPAC names, CAS numbers, and more through CID lookup
+- **Explicit Failure Behavior**: Throws parse errors instead of silently substituting an unrelated molecule
 
 #### **3. 3D Rendering Engine (`Molecule3DComponent.tsx`)**
 - **Atomic Representation**: Spheres with CPK coloring and van der Waals radii
@@ -145,11 +145,10 @@ npm run preview
 
 ## 🎯 Current Capabilities
 
-### **Molecule Library** (70+ Structures)
-- **Simple Molecules**: Water, methane, ethanol, benzene
-- **Pharmaceuticals**: Caffeine, aspirin, glucose
-- **Organic Compounds**: Alkanes, alkenes, alcohols, acids
-- **Complex Structures**: Purine derivatives, sugar molecules
+### **Structure Coverage**
+- **Database-Driven**: Renders any molecule that PubChem can resolve with coordinate data
+- **Large Coverage**: Handles a far broader set of molecules than fixed hand-coded tables
+- **Offline Safety Net**: Keeps a small built-in fallback set for common molecules when network lookup fails
 
 ### **Database Integration**
 - **Local Database**: 50+ common compounds for instant lookup
@@ -160,15 +159,11 @@ npm run preview
 ## ⚠️ Current Issues & Limitations
 
 ### **Known Issues**
-1. **Limited SMILES Parser**: Only supports ~20 common SMILES patterns
-   - Complex molecules default to fallback structures
-   - Stereochemistry information is not preserved
+1. **Network Dependency**: External structure retrieval requires PubChem availability
+   - Some identifiers may resolve to compounds that do not have coordinate records
+   - Offline fallback intentionally covers only common molecules
    
-2. **Static 3D Coordinates**: Most structures use hand-crafted coordinates
-   - No automatic 3D structure generation from SMILES
-   - Some molecules may have suboptimal geometries
-
-3. **API Rate Limiting**: No rate limiting implemented for external APIs
+2. **API Rate Limiting**: No rate limiting implemented for external APIs
    - Potential for hitting PubChem/NCI rate limits
    - No retry strategies for failed requests
 
@@ -189,8 +184,8 @@ npm run preview
 ## 🚧 Future Enhancements
 
 ### **High Priority**
-- [ ] **Advanced SMILES Parser**: Implement comprehensive SMILES parsing library
-- [ ] **Automatic 3D Generation**: Integrate RDKit or similar for structure generation
+- [ ] **Local Structure Generation**: Add openchemlib or RDKit-JS for fully offline parsing/generation
+- [ ] **Coordinate Robustness**: Add alternate conformer sources when PubChem lacks 3D records
 - [ ] **Search History**: Local storage for recently viewed molecules
 - [ ] **Export Features**: PNG/SVG export, 3D model download
 - [ ] **Performance Optimization**: Level-of-detail rendering for large molecules
