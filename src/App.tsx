@@ -3,6 +3,11 @@ import MoleculeViewer from './components/MoleculeViewer';
 import InputForm from './components/InputForm';
 import { ChemicalIdentifiers } from './types/molecule';
 import { lookupChemicalIdentifiers, getLocalIdentifiers, cleanExpiredCache, validateIdentifier, normalizeIdentifier } from './utils/identifierLookup';
+import { useMoleculeHistory } from './hooks/useMoleculeHistory';
+import { useFavourites } from './hooks/useFavourites';
+import HistoryFavouritesPanel from './components/HistoryFavouritesPanel';
+
+type PanelTab = 'search' | 'history' | 'favourites';
 
 function App() {
   const [identifiers, setIdentifiers] = useState<ChemicalIdentifiers>({
@@ -21,10 +26,14 @@ function App() {
   });
 
   const [isPanelOpen, setIsPanelOpen] = useState(true);
+  const [activeTab, setActiveTab] = useState<PanelTab>('search');
   const [sourceField, setSourceField] = useState<keyof ChemicalIdentifiers | null>(null);
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [lookupError, setLookupError] = useState<string | null>(null);
   const [lookupSource, setLookupSource] = useState<string | null>(null);
+
+  const { history, addEntry: addHistoryEntry, removeEntry: removeHistoryEntry, clearHistory } = useMoleculeHistory();
+  const { favourites, isFavourite, toggleFavourite, clearFavourites } = useFavourites();
 
   const clearIdentifiers = useCallback(() => {
     setIdentifiers({
@@ -102,11 +111,13 @@ function App() {
         console.warn('Lookup failed:', result.error);
       } else if (result.identifiers) {
         setLookupSource(result.source || null);
+        const merged = { ...identifiers, ...result.identifiers, [field]: value };
         setIdentifiers(prev => ({
           ...prev,
           ...result.identifiers,
           [field]: value
         }));
+        addHistoryEntry(merged);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
@@ -115,7 +126,15 @@ function App() {
     } finally {
       setIsLookingUp(false);
     }
-  }, [sourceField, clearIdentifiers, performLookup]);
+  }, [sourceField, clearIdentifiers, performLookup, addHistoryEntry, identifiers]);
+
+  const restoreEntry = useCallback((restoredIdentifiers: ChemicalIdentifiers) => {
+    setIdentifiers(restoredIdentifiers);
+    setSourceField(null);
+    setLookupError(null);
+    setLookupSource(null);
+    setActiveTab('search');
+  }, []);
 
   const handleClearAll = useCallback(() => {
     setIdentifiers({
@@ -186,20 +205,72 @@ function App() {
       </button>
 
       {/* Dropdown Panel */}
-      <div className={`absolute top-16 right-4 z-20 w-80 max-h-96 transform transition-all duration-300 ease-in-out origin-top-right ${
+      <div className={`absolute top-16 right-4 z-20 w-80 transform transition-all duration-300 ease-in-out origin-top-right ${
         isPanelOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0 pointer-events-none'
       }`}>
         <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-2xl border border-white/20 overflow-hidden">
+          {/* Tab bar */}
+          <div className="flex border-b border-gray-200">
+            {(['search', 'history', 'favourites'] as PanelTab[]).map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`flex-1 py-2 text-xs font-medium capitalize transition-colors ${
+                  activeTab === tab
+                    ? 'text-blue-600 border-b-2 border-blue-600 bg-white'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {tab}
+                {tab === 'history' && history.length > 0 && (
+                  <span className="ml-1 text-gray-400">({history.length})</span>
+                )}
+                {tab === 'favourites' && favourites.length > 0 && (
+                  <span className="ml-1 text-yellow-500">({favourites.length})</span>
+                )}
+              </button>
+            ))}
+          </div>
+
           <div className="max-h-96 overflow-y-auto">
-            <InputForm 
-              identifiers={identifiers}
-              onInputChange={handleInputChange}
-              sourceField={sourceField}
-              isLookingUp={isLookingUp}
-              onClearAll={handleClearAll}
-              lookupError={lookupError}
-              lookupSource={lookupSource}
-            />
+            {activeTab === 'search' && (
+              <InputForm
+                identifiers={identifiers}
+                onInputChange={handleInputChange}
+                sourceField={sourceField}
+                isLookingUp={isLookingUp}
+                onClearAll={handleClearAll}
+                lookupError={lookupError}
+                lookupSource={lookupSource}
+                isFavourite={isFavourite(identifiers)}
+                onToggleFavourite={() => toggleFavourite(identifiers)}
+              />
+            )}
+            {activeTab === 'history' && (
+              <HistoryFavouritesPanel
+                entries={history}
+                emptyMessage="No history yet. Search for a molecule to get started."
+                onRestore={restoreEntry}
+                onRemove={removeHistoryEntry}
+                onClearAll={clearHistory}
+                isFavourite={isFavourite}
+                onToggleFavourite={toggleFavourite}
+              />
+            )}
+            {activeTab === 'favourites' && (
+              <HistoryFavouritesPanel
+                entries={favourites}
+                emptyMessage="No favourites yet. Star a molecule to save it here."
+                onRestore={restoreEntry}
+                onRemove={(id) => {
+                  const entry = favourites.find(e => e.id === id);
+                  if (entry) toggleFavourite(entry.identifiers);
+                }}
+                onClearAll={clearFavourites}
+                isFavourite={isFavourite}
+                onToggleFavourite={toggleFavourite}
+              />
+            )}
           </div>
         </div>
       </div>

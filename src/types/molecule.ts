@@ -18,6 +18,13 @@ export interface MoleculeData {
   value: string;
 }
 
+export interface MoleculeEntry {
+  id: string;
+  displayName: string;
+  identifiers: ChemicalIdentifiers;
+  timestamp: number;
+}
+
 export interface Atom {
   element: string;
   x: number;
