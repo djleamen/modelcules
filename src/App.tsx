@@ -3,6 +3,7 @@ import MoleculeViewer from './components/MoleculeViewer';
 import InputForm from './components/InputForm';
 import { ChemicalIdentifiers } from './types/molecule';
 import { lookupChemicalIdentifiers, getLocalIdentifiers, cleanExpiredCache, validateIdentifier, normalizeIdentifier } from './utils/identifierLookup';
+import { getMoleculeKey } from './utils/storage';
 import { useMoleculeHistory } from './hooks/useMoleculeHistory';
 import { useFavourites } from './hooks/useFavourites';
 import HistoryFavouritesPanel from './components/HistoryFavouritesPanel';
@@ -243,7 +244,7 @@ function App() {
                 lookupError={lookupError}
                 lookupSource={lookupSource}
                 isFavourite={isFavourite(identifiers)}
-                onToggleFavourite={() => toggleFavourite(identifiers)}
+                onToggleFavourite={!isLookingUp && getMoleculeKey(identifiers) ? () => toggleFavourite(identifiers) : undefined}
               />
             )}
             {activeTab === 'history' && (

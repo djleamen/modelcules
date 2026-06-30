@@ -16,13 +16,15 @@ export function useFavourites() {
 
   const toggleFavourite = useCallback((identifiers: ChemicalIdentifiers) => {
     const key = getMoleculeKey(identifiers);
+    // Refuse to toggle when there's no stable key — we'd have no way to unstar it
+    if (!key) return;
     setFavourites(prev => {
       let next: MoleculeEntry[];
-      if (key && prev.some(e => getMoleculeKey(e.identifiers) === key)) {
+      if (prev.some(e => getMoleculeKey(e.identifiers) === key)) {
         next = prev.filter(e => getMoleculeKey(e.identifiers) !== key);
       } else {
         const entry: MoleculeEntry = {
-          id: key || crypto.randomUUID(),
+          id: key,
           displayName: getDisplayName(identifiers),
           identifiers,
           timestamp: Date.now(),
