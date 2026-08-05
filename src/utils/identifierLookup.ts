@@ -319,7 +319,7 @@ async function lookupFromPubChem(
       identifiers
     };
   } catch (error) {
-    throw new Error(`PubChem lookup failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(`PubChem lookup failed: ${error instanceof Error ? error.message : 'Unknown error'}`, { cause: error });
   }
 }
 
@@ -371,7 +371,7 @@ async function lookupFromNCICACTUS(
       identifiers
     };
   } catch (error) {
-    throw new Error(`NCI CACTUS lookup failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(`NCI CACTUS lookup failed: ${error instanceof Error ? error.message : 'Unknown error'}`, { cause: error });
   }
 }
 
