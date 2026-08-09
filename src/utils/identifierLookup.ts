@@ -146,7 +146,11 @@ function isReasonableInput(type: keyof ChemicalIdentifiers, value: string): bool
   // Check for obvious gibberish patterns
   if (trimmed.length < 2) return false;
   if (/^[^a-z0-9\-[()=\s]+$/i.test(trimmed)) return false; // Only special chars
-  if (/^[a-z]{1,3}$/.test(trimmed) && !['o', 'c', 'n', 'h'].includes(trimmed)) return false; // Very short unless common atoms
+  // Very short unless common atoms. Skip this heuristic for smiles/inchi: they
+  // have dedicated format checks below, and valid short SMILES (e.g. "CC"
+  // ethane, "CCO" ethanol, "CCN" ethylamine) are otherwise wrongly rejected.
+  if (type !== 'smiles' && type !== 'inchi' &&
+      /^[a-z]{1,3}$/.test(trimmed) && !['o', 'c', 'n', 'h'].includes(trimmed)) return false;
   
   switch (type) {
     case 'iupacName':
