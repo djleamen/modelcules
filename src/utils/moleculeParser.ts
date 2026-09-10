@@ -404,12 +404,16 @@ function createBenzene(): Molecule3D {
   const carbonRadius = 1.4;
   const hydrogenRadius = 2.45;
 
+  // Push all carbons first, then all hydrogens, so each atom's array index
+  // matches the index the bond list references (carbon i -> i, hydrogen i -> i + 6).
   for (let i = 0; i < 6; i += 1) {
     const angle = (i * Math.PI) / 3;
-    atoms.push(
-      { id: i, element: 'C', x: carbonRadius * Math.cos(angle), y: carbonRadius * Math.sin(angle), z: 0 },
-      { id: i + 6, element: 'H', x: hydrogenRadius * Math.cos(angle), y: hydrogenRadius * Math.sin(angle), z: 0 }
-    );
+    atoms.push({ id: i, element: 'C', x: carbonRadius * Math.cos(angle), y: carbonRadius * Math.sin(angle), z: 0 });
+  }
+
+  for (let i = 0; i < 6; i += 1) {
+    const angle = (i * Math.PI) / 3;
+    atoms.push({ id: i + 6, element: 'H', x: hydrogenRadius * Math.cos(angle), y: hydrogenRadius * Math.sin(angle), z: 0 });
   }
 
   for (let i = 0; i < 6; i += 1) {

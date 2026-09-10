@@ -17,7 +17,8 @@ export function getDisplayName(identifiers: ChemicalIdentifiers): string {
 export function loadHistory(): MoleculeEntry[] {
   try {
     const raw = localStorage.getItem(HISTORY_KEY);
-    return raw ? (JSON.parse(raw) as MoleculeEntry[]) : [];
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? (parsed as MoleculeEntry[]) : [];
   } catch {
     return [];
   }
@@ -34,7 +35,8 @@ export function saveHistory(entries: MoleculeEntry[]): void {
 export function loadFavourites(): MoleculeEntry[] {
   try {
     const raw = localStorage.getItem(FAVOURITES_KEY);
-    return raw ? (JSON.parse(raw) as MoleculeEntry[]) : [];
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? (parsed as MoleculeEntry[]) : [];
   } catch {
     return [];
   }
