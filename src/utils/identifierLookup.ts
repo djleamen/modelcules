@@ -99,7 +99,14 @@ export function validateIdentifier(type: keyof ChemicalIdentifiers, value: strin
 
 // Generate cache key for an identifier
 function getCacheKey(type: keyof ChemicalIdentifiers, value: string): string {
-  return `${type}:${normalizeIdentifier(type, value).toLowerCase()}`;
+  const normalized = normalizeIdentifier(type, value);
+  // SMILES is case-sensitive (uppercase 'C' = aliphatic carbon, lowercase 'c'
+  // = aromatic), so preserve case here the same way getLocalIdentifiers and
+  // moleculeParser do. Lowercasing would collide e.g. cyclohexane 'C1CCCCC1'
+  // with benzene 'c1ccccc1' and return the wrong compound's identifiers.
+  return type === 'smiles'
+    ? `${type}:${normalized}`
+    : `${type}:${normalized.toLowerCase()}`;
 }
 
 // Check if cached data is still valid
