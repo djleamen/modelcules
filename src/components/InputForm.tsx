@@ -32,7 +32,7 @@ const InputForm = ({
   isFavourite = false,
   onToggleFavourite,
 }: InputFormProps) => {
-  const hasAnyIdentifier = Object.values(identifiers).some(v => v.trim() !== '');
+  const hasAnyIdentifier = Object.values(identifiers).some(v => (v ?? '').trim() !== '');
   return (
     <div className="p-4 h-full">
       <div className="mb-4 flex items-center justify-between">
@@ -107,7 +107,7 @@ const InputForm = ({
         {inputFields.map((field) => {
           const isSourceField = sourceField === field.key;
           const isReadOnly = Boolean(sourceField && !isSourceField);
-          const hasValue = identifiers[field.key].trim() !== '';
+          const hasValue = (identifiers[field.key] ?? '').trim() !== '';
           
           let labelClassName: string;
           if (isSourceField) {
@@ -144,7 +144,7 @@ const InputForm = ({
               <input
                 type="text"
                 id={field.key}
-                value={identifiers[field.key]}
+                value={identifiers[field.key] ?? ''}
                 onChange={(e) => onInputChange(field.key, e.target.value)}
                 placeholder={field.placeholder}
                 readOnly={isReadOnly}

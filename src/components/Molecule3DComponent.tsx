@@ -8,6 +8,40 @@ interface Molecule3DComponentProps {
   molecule: Molecule3D;
 }
 
+type Vec3 = [number, number, number];
+
+const BOND_COLOR = '#505050';
+
+// One bond cylinder. Factored out so the single/double/triple cases below
+// don't each repeat the mesh + material markup.
+function BondCylinder({
+  position,
+  quaternion,
+  radius,
+  length,
+}: {
+  position: Vec3;
+  quaternion: [number, number, number, number];
+  radius: number;
+  length: number;
+}) {
+  return (
+    <Cylinder position={position} quaternion={quaternion} args={[radius, radius, length, 8]}>
+      <meshStandardMaterial color={BOND_COLOR} metalness={0.3} roughness={0.7} />
+    </Cylinder>
+  );
+}
+
+// Shift a point along an axis by a signed distance — used to place the
+// parallel cylinders of a double/triple bond beside the bond line.
+function shiftAlong(position: Vec3, axis: Vec3, distance: number): Vec3 {
+  return [
+    position[0] + axis[0] * distance,
+    position[1] + axis[1] * distance,
+    position[2] + axis[2] * distance,
+  ];
+}
+
 // Element colors (CPK coloring scheme)
 const elementColors: { [key: string]: string } = {
   'H': '#FFFFFF',   // White
@@ -100,9 +134,21 @@ const Molecule3DComponent = ({ molecule }: Molecule3DComponentProps) => {
       const up = new THREE.Vector3(0, 1, 0);
       quaternion.setFromUnitVectors(up, direction.normalize());
 
+      // Axis to separate the parallel cylinders of a double/triple bond. It
+      // must be perpendicular to the bond, otherwise the cylinders are offset
+      // *along* the bond and overlap (e.g. CO2's axis-aligned O=C=O). Cross the
+      // bond direction with an up vector, falling back to another axis when the
+      // bond is itself vertical.
+      let perp = new THREE.Vector3().crossVectors(direction, up);
+      if (perp.lengthSq() < 1e-6) {
+        perp = new THREE.Vector3().crossVectors(direction, new THREE.Vector3(1, 0, 0));
+      }
+      perp.normalize();
+
       return {
         key: `bond-${index}`,
         position: [midpoint.x, midpoint.y, midpoint.z] as [number, number, number],
+        offsetAxis: [perp.x, perp.y, perp.z] as [number, number, number],
         quaternion: [quaternion.x, quaternion.y, quaternion.z, quaternion.w] as [number, number, number, number],
         length: distance,
         bondType: bond.bondType
@@ -127,118 +173,36 @@ const Molecule3DComponent = ({ molecule }: Molecule3DComponentProps) => {
       {/* Render bonds */}
       {bondElements.map((bondElement) => {
         if (!bondElement) return null;
-        
+
+        const { key, position, quaternion, offsetAxis, length, bondType } = bondElement;
         let radius: number;
-        if (bondElement.bondType === 1) {
+        if (bondType === 1) {
           radius = 0.1;
-        } else if (bondElement.bondType === 2) {
+        } else if (bondType === 2) {
           radius = 0.08;
         } else {
           radius = 0.06;
         }
 
-        if (bondElement.bondType === 1) {
+        if (bondType === 1) {
           // Single bond
           return (
-            <Cylinder
-              key={bondElement.key}
-              position={bondElement.position}
-              quaternion={bondElement.quaternion}
-              args={[radius, radius, bondElement.length, 8]}
-            >
-              <meshStandardMaterial 
-                color="#505050"
-                metalness={0.3}
-                roughness={0.7}
-              />
-            </Cylinder>
-          );
-        } else if (bondElement.bondType === 2) {
-          // Double bond - two parallel cylinders
-          const offset = 0.2;
-          return (
-            <group key={bondElement.key}>
-              <Cylinder
-                position={[
-                  bondElement.position[0] + offset,
-                  bondElement.position[1],
-                  bondElement.position[2]
-                ]}
-                quaternion={bondElement.quaternion}
-                args={[radius, radius, bondElement.length, 8]}
-              >
-                <meshStandardMaterial 
-                  color="#505050"
-                  metalness={0.3}
-                  roughness={0.7}
-                />
-              </Cylinder>
-              <Cylinder
-                position={[
-                  bondElement.position[0] - offset,
-                  bondElement.position[1],
-                  bondElement.position[2]
-                ]}
-                quaternion={bondElement.quaternion}
-                args={[radius, radius, bondElement.length, 8]}
-              >
-                <meshStandardMaterial 
-                  color="#505050"
-                  metalness={0.3}
-                  roughness={0.7}
-                />
-              </Cylinder>
-            </group>
-          );
-        } else {
-          // Triple bond - three parallel cylinders
-          const offset = 0.15;
-          return (
-            <group key={bondElement.key}>
-              <Cylinder
-                position={bondElement.position}
-                quaternion={bondElement.quaternion}
-                args={[radius, radius, bondElement.length, 8]}
-              >
-                <meshStandardMaterial 
-                  color="#505050"
-                  metalness={0.3}
-                  roughness={0.7}
-                />
-              </Cylinder>
-              <Cylinder
-                position={[
-                  bondElement.position[0] + offset,
-                  bondElement.position[1],
-                  bondElement.position[2]
-                ]}
-                quaternion={bondElement.quaternion}
-                args={[radius, radius, bondElement.length, 8]}
-              >
-                <meshStandardMaterial 
-                  color="#505050"
-                  metalness={0.3}
-                  roughness={0.7}
-                />
-              </Cylinder>
-              <Cylinder
-                position={[
-                  bondElement.position[0] - offset,
-                  bondElement.position[1],
-                  bondElement.position[2]
-                ]}
-                quaternion={bondElement.quaternion}
-                args={[radius, radius, bondElement.length, 8]}
-              >
-                <meshStandardMaterial 
-                  color="#505050"
-                  metalness={0.3}
-                  roughness={0.7}
-                />
-              </Cylinder>
-            </group>
+            <BondCylinder key={key} position={position} quaternion={quaternion} radius={radius} length={length} />
           );
         }
+
+        // Double/triple bonds: parallel cylinders offset perpendicular to the
+        // bond; a triple bond also keeps one cylinder on the bond line.
+        const offset = bondType === 2 ? 0.2 : 0.15;
+        return (
+          <group key={key}>
+            {bondType === 3 && (
+              <BondCylinder position={position} quaternion={quaternion} radius={radius} length={length} />
+            )}
+            <BondCylinder position={shiftAlong(position, offsetAxis, offset)} quaternion={quaternion} radius={radius} length={length} />
+            <BondCylinder position={shiftAlong(position, offsetAxis, -offset)} quaternion={quaternion} radius={radius} length={length} />
+          </group>
+        );
       })}
     </group>
   );
