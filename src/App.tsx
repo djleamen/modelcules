@@ -179,12 +179,12 @@ function App() {
       {/* Header with Title */}
       <div className="absolute top-4 left-4 z-20">
         <h1 className="text-4xl font-bold text-white drop-shadow-lg">Modelcules</h1>
-        <p className="text-lg text-white/90 drop-shadow">3D Molecular Visualization</p>
+        <p className="text-lg text-white/90 drop-shadow-sm">3D Molecular Visualization</p>
       </div>
 
       {/* Current Molecule Info - positioned below hamburger menu */}
       {currentMolecule && (
-        <div className="absolute top-20 right-4 z-20 bg-black/50 backdrop-blur-sm text-white px-3 py-2 rounded-lg max-w-xs">
+        <div className="absolute top-20 right-4 z-20 bg-black/50 backdrop-blur-xs text-white px-3 py-2 rounded-lg max-w-xs">
           <p className="text-xs">
             <span className="font-medium">{currentMolecule.type}:</span> {currentMolecule.value.substring(0, 25)}
             {currentMolecule.value.length > 25 ? '...' : ''}
@@ -195,7 +195,7 @@ function App() {
       {/* Hamburger Menu Button */}
       <button
         onClick={() => setIsPanelOpen(!isPanelOpen)}
-        className="absolute top-4 right-4 z-30 bg-black/50 hover:bg-black/70 backdrop-blur-sm text-white p-3 rounded-lg shadow-lg transition-all duration-200"
+        className="absolute top-4 right-4 z-30 bg-black/50 hover:bg-black/70 backdrop-blur-xs text-white p-3 rounded-lg shadow-lg transition-all duration-200"
         aria-label={isPanelOpen ? "Close menu" : "Open menu"}
       >
         <div className="w-6 h-6 flex flex-col justify-center space-y-1">
@@ -209,7 +209,7 @@ function App() {
       <div className={`absolute top-16 right-4 z-20 w-80 transform transition-all duration-300 ease-in-out origin-top-right ${
         isPanelOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0 pointer-events-none'
       }`}>
-        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-2xl border border-white/20 overflow-hidden">
+        <div className="bg-white/95 backdrop-blur-xs rounded-lg shadow-2xl border border-white/20 overflow-hidden">
           {/* Tab bar */}
           <div className="flex border-b border-gray-200">
             {(['search', 'history', 'favourites'] as PanelTab[]).map(tab => (

@@ -44,8 +44,8 @@ const MoleculeViewer: React.FC<MoleculeViewerProps> = ({ molecule, allIdentifier
 
   if (!molecule?.value.trim()) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
-        <div className="text-center">
+      <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-slate-900 via-blue-900 to-slate-900">
+        <div className="text-center px-6 max-w-md">
           <div className="text-white/60 mb-6">
             <svg className="w-20 h-20 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 7.172V5L8 4z" />
@@ -53,7 +53,7 @@ const MoleculeViewer: React.FC<MoleculeViewerProps> = ({ molecule, allIdentifier
           </div>
           <h2 className="text-white text-2xl font-light mb-4">Enter a chemical identifier</h2>
           <p className="text-white/80 text-lg">Start typing in the panel to view 3D molecular structures</p>
-          <p className="text-white/60 text-sm mt-4">Use the button in the top-left to open the identifier panel</p>
+          <p className="text-white/60 text-sm mt-4">Try “caffeine”, “aspirin” or a CAS number like 50-78-2 — use the button in the top-right to open the panel</p>
         </div>
       </div>
     );
@@ -61,7 +61,7 @@ const MoleculeViewer: React.FC<MoleculeViewerProps> = ({ molecule, allIdentifier
 
   if (loading) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+      <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-slate-900 via-blue-900 to-slate-900">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white/60 mx-auto mb-6"></div>
           <p className="text-white text-lg">Parsing molecule...</p>
@@ -72,7 +72,7 @@ const MoleculeViewer: React.FC<MoleculeViewerProps> = ({ molecule, allIdentifier
 
   if (error) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+      <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-slate-900 via-blue-900 to-slate-900">
         <div className="text-center">
           <div className="text-red-400 mb-6">
             <svg className="w-20 h-20 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -88,7 +88,7 @@ const MoleculeViewer: React.FC<MoleculeViewerProps> = ({ molecule, allIdentifier
 
   if (!molecule3D || molecule3D.atoms.length === 0) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+      <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-slate-900 via-blue-900 to-slate-900">
         <div className="text-center">
           <div className="text-yellow-400 mb-6">
             <svg className="w-20 h-20 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -139,7 +139,7 @@ const MoleculeViewer: React.FC<MoleculeViewerProps> = ({ molecule, allIdentifier
       </Canvas>
       
       {/* Info overlay */}
-      <div className="absolute bottom-4 right-4 bg-black/40 backdrop-blur-sm text-white px-4 py-2 rounded-lg">
+      <div className="absolute bottom-4 right-4 bg-black/40 backdrop-blur-xs text-white px-4 py-2 rounded-lg">
         <p className="text-sm">{molecule3D.atoms.length} atoms, {molecule3D.bonds.length} bonds</p>
         <p className="text-xs text-white/80 mt-1">Drag to rotate • Scroll to zoom • Right-click to pan</p>
       </div>
