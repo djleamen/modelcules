@@ -84,7 +84,7 @@ const InputForm = ({
       {lookupError && (
         <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded-md">
           <div className="flex items-center gap-2">
-            <svg className="w-3 h-3 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3 h-3 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.96-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
             </svg>
             <span className="text-xs text-red-700">Lookup failed: {lookupError}</span>
@@ -95,7 +95,7 @@ const InputForm = ({
       {lookupSource && !isLookingUp && !lookupError && (
         <div className="mb-3 p-2 bg-green-50 border border-green-200 rounded-md">
           <div className="flex items-center gap-2">
-            <svg className="w-3 h-3 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3 h-3 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
             <span className="text-xs text-green-700">Identifiers loaded from {lookupSource}</span>
@@ -120,11 +120,11 @@ const InputForm = ({
           
           let inputClassName: string;
           if (isSourceField) {
-            inputClassName = 'border-blue-300 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white/90';
+            inputClassName = 'border-blue-300 focus:outline-hidden focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white/90';
           } else if (isReadOnly) {
             inputClassName = 'border-gray-200 bg-gray-50/90 text-gray-600 cursor-not-allowed';
           } else {
-            inputClassName = 'border-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white/90';
+            inputClassName = 'border-gray-300 focus:outline-hidden focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white/90';
           }
           
           return (
@@ -148,47 +148,47 @@ const InputForm = ({
                 onChange={(e) => onInputChange(field.key, e.target.value)}
                 placeholder={field.placeholder}
                 readOnly={isReadOnly}
-                className={`w-full px-2 py-1.5 text-sm border rounded shadow-sm transition-colors ${inputClassName}`}
+                className={`w-full px-2 py-1.5 text-sm border rounded-sm shadow-xs transition-colors ${inputClassName}`}
               />
             </div>
           );
         })}
       </div>
 
-      <div className="p-3 bg-blue-50/90 rounded border border-blue-200">
+      <div className="p-3 bg-blue-50/90 rounded-sm border border-blue-200">
         <h3 className="text-xs font-medium text-blue-900 mb-2">Quick Examples</h3>
         <div className="space-y-1">
           <button
             onClick={() => onInputChange('smiles', 'CCO')}
-            className="w-full text-left text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-100/90 px-2 py-1 rounded transition-colors"
+            className="w-full text-left text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-100/90 px-2 py-1 rounded-sm transition-colors"
             disabled={isLookingUp}
           >
             <span className="font-medium">CCO</span> - Ethanol
           </button>
           <button
             onClick={() => onInputChange('smiles', 'c1ccccc1')}
-            className="w-full text-left text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-100/90 px-2 py-1 rounded transition-colors"
+            className="w-full text-left text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-100/90 px-2 py-1 rounded-sm transition-colors"
             disabled={isLookingUp}
           >
             <span className="font-medium">c1ccccc1</span> - Benzene
           </button>
           <button
             onClick={() => onInputChange('smiles', 'CC(=O)O')}
-            className="w-full text-left text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-100/90 px-2 py-1 rounded transition-colors"
+            className="w-full text-left text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-100/90 px-2 py-1 rounded-sm transition-colors"
             disabled={isLookingUp}
           >
             <span className="font-medium">CC(=O)O</span> - Acetic acid
           </button>
           <button
             onClick={() => onInputChange('smiles', 'O=C=O')}
-            className="w-full text-left text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-100/90 px-2 py-1 rounded transition-colors"
+            className="w-full text-left text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-100/90 px-2 py-1 rounded-sm transition-colors"
             disabled={isLookingUp}
           >
             <span className="font-medium">O=C=O</span> - Carbon dioxide
           </button>
           <button
             onClick={() => onInputChange('smiles', 'O')}
-            className="w-full text-left text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-100/90 px-2 py-1 rounded transition-colors"
+            className="w-full text-left text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-100/90 px-2 py-1 rounded-sm transition-colors"
             disabled={isLookingUp}
           >
             <span className="font-medium">O</span> - Water

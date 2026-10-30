@@ -70,7 +70,7 @@ const HistoryFavouritesPanel = ({
             {/* Favourite star */}
             <button
               onClick={() => onToggleFavourite(entry.identifiers)}
-              className={`flex-shrink-0 p-0.5 transition-colors ${
+              className={`shrink-0 p-0.5 transition-colors ${
                 isFavourite(entry.identifiers)
                   ? 'text-yellow-400 hover:text-yellow-500'
                   : 'text-gray-300 hover:text-yellow-400'
@@ -86,7 +86,7 @@ const HistoryFavouritesPanel = ({
             {/* Remove button */}
             <button
               onClick={() => onRemove(entry.id)}
-              className="flex-shrink-0 p-0.5 text-gray-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+              className="shrink-0 p-0.5 text-gray-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
               title="Remove"
               aria-label={`Remove ${entry.displayName}`}
             >
